@@ -1,7 +1,9 @@
+using System.Text;
 using BidServiceWorker;
 using NLog;
 using NLog.Web;
-
+using RabbitMQ.Client;
+using RabbitMQ.Client.Events;
 
 //Indlæs NLog.config-konfigurationsfil
 var logger =
