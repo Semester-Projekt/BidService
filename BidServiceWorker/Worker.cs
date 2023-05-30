@@ -36,56 +36,76 @@ namespace BidServiceWorker
         {
             var factory = new ConnectionFactory()
             {
-                HostName = _config["rabbithostname"]
-            };
+                HostName = _config["rabbithostname"],
+                UserName = "worker",
+                Password = "1234",
+                VirtualHost = ConnectionFactory.DefaultVHost
+        };
+            _logger.LogInformation($"Using {_config["rabbithostname"]}");
+         
 
-            using var connection = factory.CreateConnection();
-            using var channel = connection.CreateModel();
-            _channel = channel;
 
-            _channel.QueueDeclare(queue: "new-bid-queue",
-                            durable: false,
-                            exclusive: false,
-                            autoDelete: false,
-                            arguments: null);
+                using var connection = factory.CreateConnection();
+                using var _channel = connection.CreateModel();
 
-            var consumer = new EventingBasicConsumer(_channel);
-            consumer.Received += (model, ea) =>
+
+                _channel.QueueDeclare(queue: "new-bid-queue",
+                                durable: false,
+                                exclusive: false,
+                                autoDelete: false,
+                                arguments: null);
+            try
             {
-                var body = ea.Body.ToArray();
-                var message = Encoding.UTF8.GetString(body);
-                Console.WriteLine($" [x] Received {message}");
-
-                // Parse the received message as JSON
-                var jsonDocument = JsonDocument.Parse(message);
-
-                // Extract the "BidAmount" value
-                if (jsonDocument.RootElement.TryGetProperty("BidAmount", out var bidAmountProperty) && bidAmountProperty.ValueKind == JsonValueKind.Number)
+                var consumer = new EventingBasicConsumer(_channel);
+                consumer.Received += (model, ea) =>
                 {
-                    var bidAmount = bidAmountProperty.GetInt32(); // Assumes the "BidAmount" is an integer
-                    Console.WriteLine($" [x] Received BidAmount: {bidAmount}");
+                    var body = ea.Body.ToArray();
+                    var message = Encoding.UTF8.GetString(body);
+                    Console.WriteLine($" [x] Received {message}");
 
-                    // Extract the "AuctionId" value
-                    if (jsonDocument.RootElement.TryGetProperty("AuctionId", out var auctionIdProperty) && auctionIdProperty.ValueKind == JsonValueKind.Number)
+                    // Parse the received message as JSON
+                    var jsonDocument = JsonDocument.Parse(message);
+
+                    // Extract the "BidAmount" value
+                    if (jsonDocument.RootElement.TryGetProperty("BidAmount", out var bidAmountProperty) && bidAmountProperty.ValueKind == JsonValueKind.Number)
                     {
-                        var auctionId = auctionIdProperty.GetInt32(); // Assumes the "AuctionId" is an integer
-                        Console.WriteLine($" [x] Received AuctionId: {auctionId}");
+                        var bidAmount = bidAmountProperty.GetInt32(); // Assumes the "BidAmount" is an integer
+                        Console.WriteLine($" [x] Received BidAmount: {bidAmount}");
 
-                        // Send the bidAmount and auctionId back to RabbitMQ or perform any required processing
-                        PublishBidAmountAndAuctionId(bidAmount, auctionId);
+                        // Extract the "AuctionId" value
+                        if (jsonDocument.RootElement.TryGetProperty("AuctionId", out var auctionIdProperty) && auctionIdProperty.ValueKind == JsonValueKind.Number)
+                        {
+                            var auctionId = auctionIdProperty.GetInt32(); // Assumes the "AuctionId" is an integer
+                            Console.WriteLine($" [x] Received AuctionId: {auctionId}");
+
+                            // Send the bidAmount and auctionId back to RabbitMQ or perform any required processing
+                           // PublishBidAmountAndAuctionId(bidAmount, auctionId);
+                        }
+                        else
+                        {
+                            Console.WriteLine("Invalid or missing AuctionId property in the received message.");
+                        }
                     }
                     else
                     {
-                        Console.WriteLine("Invalid or missing AuctionId property in the received message.");
+                        Console.WriteLine("Invalid or missing BidAmount property in the received message.");
                     }
-                }
-                else
-                {
-                    Console.WriteLine("Invalid or missing BidAmount property in the received message.");
-                }
-            };
+                };
 
-            _channel.BasicConsume(queue: "new-bid-queue", autoAck: true, consumer: consumer);
+                _channel.BasicConsume(queue: "new-bid-queue", autoAck: true, consumer: consumer);
+            }
+            catch (Exception ex)
+            {
+
+                _logger.LogError (ex.Message);
+
+            }    // Background service loop
+                while (!stoppingToken.IsCancellationRequested)
+                {
+              //      _logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
+                    await Task.Delay(1000, stoppingToken);
+                }
+            
         }
 
         private void PublishBidAmountAndAuctionId(int bidAmount, int auctionId)
