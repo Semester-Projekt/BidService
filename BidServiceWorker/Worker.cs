@@ -24,12 +24,12 @@ namespace BidServiceWorker
             _config = config;
             _logger.LogInformation($"Connecting to RabbitMQ on {_config["rabbithostname"]}");
 
-            var factory = new ConnectionFactory()
+         /*   var factory = new ConnectionFactory()
             {
                 HostName = _config["rabbithostname"],
             };
 
-            _connection = factory.CreateConnection();
+            _connection = factory.CreateConnection();*/
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
