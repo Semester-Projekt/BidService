@@ -36,9 +36,7 @@ namespace BidServiceWorker
         {
             var factory = new ConnectionFactory()
             {
-                HostName = _config["rabbithostname"],
-                UserName = "guest",
-                Password = "guest"
+                HostName = _config["rabbithostname"]
             };
 
             using var connection = factory.CreateConnection();
