@@ -43,7 +43,8 @@ namespace BidServiceWorker
 
 
                 using var connection = factory.CreateConnection();
-                using var _channel = connection.CreateModel();
+                _connection = connection;    
+                _channel = connection.CreateModel();
 
 
                 _channel.QueueDeclare(queue: "new-bid-queue",
