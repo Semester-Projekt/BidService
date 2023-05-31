@@ -51,6 +51,13 @@ namespace BidServiceWorker
                                 exclusive: false,
                                 autoDelete: false,
                                 arguments: null);
+
+              _channel.QueueDeclare(queue: "bid-data-queue",
+                              durable: false,
+                              exclusive: false,
+                              autoDelete: false,
+                              arguments: null);
+
             try
             {
                 var consumer = new EventingBasicConsumer(_channel);
