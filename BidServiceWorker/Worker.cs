@@ -34,6 +34,9 @@ namespace BidServiceWorker
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
+
+            await Task.Delay(TimeSpan.FromSeconds(10), stoppingToken); // Add a delay of 10 seconds
+
             var factory = new ConnectionFactory()
             {
                 HostName = _config["rabbithostname"],
