@@ -24,18 +24,12 @@ namespace BidServiceWorker
             _config = config;
             _logger.LogInformation($"Connecting to RabbitMQ on {_config["rabbithostname"]}");
 
-         /*   var factory = new ConnectionFactory()
-            {
-                HostName = _config["rabbithostname"],
-            };
-
-            _connection = factory.CreateConnection();*/
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
 
-            await Task.Delay(TimeSpan.FromSeconds(10), stoppingToken); // Add a delay of 10 seconds
+            await Task.Delay(TimeSpan.FromSeconds(10), stoppingToken); // 10 sekunder delay på connect til rabbitMQ - fikser coreDump-fejl
 
             var factory = new ConnectionFactory()
             {
@@ -82,7 +76,7 @@ namespace BidServiceWorker
                             Console.WriteLine($" [x] Received AuctionId: {auctionId}");
 
                             // Send the bidAmount and auctionId back to RabbitMQ or perform any required processing
-                           // PublishBidAmountAndAuctionId(bidAmount, auctionId);
+                            PublishBidAmountAndAuctionId(bidAmount, auctionId);
                         }
                         else
                         {
